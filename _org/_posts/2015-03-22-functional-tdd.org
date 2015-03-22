@@ -27,7 +27,7 @@ you'll have to write, write code to make the test pass, and refactor.
 Then, there are is the outside-in or "London School" way, which
 designs all collaborators in a user story up front, and writes [[http://blog.8thlight.com/uncle-bob/2014/05/14/TheLittleMocker.html][test
 doubles]] for each collaborator, testing whether the correct methods are
-called when a single test case is handled.
+called when a single test case is handled.[fn:5]
 
 Both of these methods have some of the same problems.  I'll try to
 elaborate a bit on those here.
@@ -229,3 +229,7 @@ totally independent of their surroundings, and therefore handled
 concurrently.  But writes to a database, for instance, should still be
 coordinated.  That stuff is stateful, and should lie here, too.  More
 on that in later posts.
+
+[fn:5] [[http://martinfowler.com/articles/mocksArentStubs.html][This blog]] by Martin Fowler has a lot of interesting things to
+say about "Classical TDD" versus "Mockist TDD", I can recommend the
+read!

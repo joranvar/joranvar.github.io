@@ -19,7 +19,7 @@ you'll have to write, write code to make the test pass, and refactor.
 Then, there are is the outside-in or "London School" way, which
 designs all collaborators in a user story up front, and writes <a href="http://blog.8thlight.com/uncle-bob/2014/05/14/TheLittleMocker.html">test
 doubles</a> for each collaborator, testing whether the correct methods are
-called when a single test case is handled.
+called when a single test case is handled.<sup><a id="fnr.1" name="fnr.1" class="footref" href="#fn.1">1</a></sup>
 </p>
 
 <p>
@@ -112,7 +112,7 @@ suddenly seemed an exercise that really resembled partial function
 application from F#.  The dependency injection started feeling like
 using monads, and <a href="http://gettingsharper.de/2015/03/10/dependency-injection-a-functional-way/">this insightful blog post</a> played no small part in
 it.  What if we write tests from the outside in, refactoring into
-classes and collaborators as we go?  Is there a way to mock out<sup><a id="fnr.1" name="fnr.1" class="footref" href="#fn.1">1</a></sup>
+classes and collaborators as we go?  Is there a way to mock out<sup><a id="fnr.2" name="fnr.2" class="footref" href="#fn.2">2</a></sup>
 the external dependencies in such a way that we make it easier to test
 the composition root?
 </p>
@@ -136,7 +136,7 @@ the customer to make the requirement testable?
 A good test is reproducible.  Therefore, it has a setup phase, making
 sure that the system is in a state from which we can verify the
 results of the test.  This is quite an important part, and bears a
-very big similarity to functional programming in general.<sup><a id="fnr.2" name="fnr.2" class="footref" href="#fn.2">2</a></sup>
+very big similarity to functional programming in general.<sup><a id="fnr.3" name="fnr.3" class="footref" href="#fn.3">3</a></sup>
 Seeing that the system should respond predictably, we should model
 that state as part of the input to the system (which we usually do,
 but not as explicitly).
@@ -206,7 +206,7 @@ responsible for only a single event or request.  If the Environment
 would deliver various events, it could no longer be considered
 stateless.  If the adapter should route different events to different
 handlers, there would be more environment-independent logic inside
-this Composition Root<sup><a id="fnr.3" name="fnr.3" class="footref" href="#fn.3">3</a></sup>.
+this Composition Root<sup><a id="fnr.4" name="fnr.4" class="footref" href="#fn.4">4</a></sup>.
 </p>
 
 <p>
@@ -214,7 +214,7 @@ With all the unpredictable stuff moved to this adapter, writing the
 inside code needs no longer be overly defensive, focusing on
 implementing the requirements instead of handling exceptions,
 unforeseen situations, and incomplete data.  The adapter code can now
-focus on being testable under different circumstances.<sup><a id="fnr.4" name="fnr.4" class="footref" href="#fn.4">4</a></sup>
+focus on being testable under different circumstances.<sup><a id="fnr.5" name="fnr.5" class="footref" href="#fn.5">5</a></sup>
 </p>
 </div>
 </div>
@@ -278,22 +278,28 @@ Installation Tester.  Til then!
 <div id="text-footnotes">
 
 <div class="footdef"><sup><a id="fn.1" name="fn.1" class="footnum" href="#fnr.1">1</a></sup> <p class="footpara">
+<a href="http://martinfowler.com/articles/mocksArentStubs.html">This blog</a> by Martin Fowler has a lot of interesting things to
+say about "Classical TDD" versus "Mockist TDD", I can recommend the
+read!
+</p></div>
+
+<div class="footdef"><sup><a id="fn.2" name="fn.2" class="footnum" href="#fnr.2">2</a></sup> <p class="footpara">
 Colloquially speaking. I don't really know how to verb "Test
 Double".
 </p></div>
 
-<div class="footdef"><sup><a id="fn.2" name="fn.2" class="footnum" href="#fnr.2">2</a></sup> <p class="footpara">
+<div class="footdef"><sup><a id="fn.3" name="fn.3" class="footnum" href="#fnr.3">3</a></sup> <p class="footpara">
 The similar part of functional programming being the
 <a href="http://c2.com/cgi/wiki?ReferentialTransparency">referential transparency</a>, here.  Executing the same test 100 times
 will yield the same result 100 times.
 </p></div>
 
-<div class="footdef"><sup><a id="fn.3" name="fn.3" class="footnum" href="#fnr.3">3</a></sup> <p class="footpara">
+<div class="footdef"><sup><a id="fn.4" name="fn.4" class="footnum" href="#fnr.4">4</a></sup> <p class="footpara">
 Actually, I should start calling it the EnvironmentAdapter,
 because this code should do more than just wire objects together.
 </p></div>
 
-<div class="footdef"><sup><a id="fn.4" name="fn.4" class="footnum" href="#fnr.4">4</a></sup> <p class="footpara">
+<div class="footdef"><sup><a id="fn.5" name="fn.5" class="footnum" href="#fnr.5">5</a></sup> <p class="footpara">
 It should probably also have some code to coordinate state
 changes to bottleneck state providers.  That is, requests can be
 totally independent of their surroundings, and therefore handled
