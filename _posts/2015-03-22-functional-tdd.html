@@ -1,0 +1,294 @@
+---
+layout: default
+title: Functional TDD
+---
+
+<blockquote>
+<p>
+Insert real quote here
+</p>
+</blockquote>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Problems with TDD</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Most examples and guides I found on the internet about TDD and how to
+start, have an inside-out work flow: write a test for a class you know
+you'll have to write, write code to make the test pass, and refactor.
+Then, there are is the outside-in or "London School" way, which
+designs all collaborators in a user story up front, and writes <a href="http://blog.8thlight.com/uncle-bob/2014/05/14/TheLittleMocker.html">test
+doubles</a> for each collaborator, testing whether the correct methods are
+called when a single test case is handled.
+</p>
+
+<p>
+Both of these methods have some of the same problems.  I'll try to
+elaborate a bit on those here.
+</p>
+</div>
+
+<div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1">Making up interfaces</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+Design up front is needed in both situations.  This is not necessarily
+a bad thing, but you'll never be as smart and knowledgeable about a
+project as by the end of it.  So design up front will in most cases
+either mean redesigning as you go, or bending new use cases to the
+existing design.  Because changing interfaces and classes comes at a
+cost, the second method is usually chosen (adhering to the existing
+design).  And to prevent that design from becoming too restricting,
+more effort is put into setting up a better design up front, leading
+to...
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2">YAGNI</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+Bigger designs up front mean designing for things that you're probably
+not gonna need anyway.  With inside-out TDD, the most easily
+fallen-into trap is: checking for invalid state or invalid request
+formats from code that is going to be written by ourselves anyway.
+Degenerate use cases that will never occur, may be a good exercise,
+but will be a waste of time in the development of many systems.
+</p>
+
+<p>
+With outside-in TDD, YAGNI manifests itself in thinking up
+collaborators that may or may not have a lot of work to do.  Will you
+really need a new interface and a class for behavior that is never
+going to be modular?  Will you need an "IEmailValidator" in your
+"UserAccountController", and an "IEmailRegexProvider" inside that, and
+maybe an "IRegexBuilder" inside that again, or will it be better to
+make sure that a request is always in a strongly typed, correctly
+formed object?
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-3" class="outline-3">
+<h3 id="sec-1-3">Late real composition</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+The <a href="http://blog.ploeh.dk/2011/07/28/CompositionRoot/">Composition Root</a> is the place in every application where the
+inside expectations are finally bound to the outside world.  This is
+one of the few, and sometimes only, places, where all external
+dependencies are seen alongside each other.  Most of the time, this
+happens earlier, in acceptance tests, but more often than not, those
+are not really written until after the (test doubles assisted) unit
+tests are done.
+</p>
+
+<p>
+This is the hardest to test place in the code.  Unit tests should not
+interact with the environment, in order to keep them fast.  So using
+test doubles for those interactions is a good idea.  The problem is,
+when using test doubles, writing the composition root is usually
+deferred until deployment testing time.  And as deployment testing is
+quite hard, this is not the thing you want to start too late.
+</p>
+
+<p>
+Even worse: the composition root being the last one to be written, it
+probably has no clear interface.  There may be a config file, but even
+that does not really communicate the application's dependencies too
+clearly.  And unclear dependencies / requirements are harder to test.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Starting with the requirement</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+I've been thinking about software and Test Driven Design for the last
+few years.  And last week, refactoring constructor parameters in C#
+suddenly seemed an exercise that really resembled partial function
+application from F#.  The dependency injection started feeling like
+using monads, and <a href="http://gettingsharper.de/2015/03/10/dependency-injection-a-functional-way/">this insightful blog post</a> played no small part in
+it.  What if we write tests from the outside in, refactoring into
+classes and collaborators as we go?  Is there a way to mock out<sup><a id="fnr.1" name="fnr.1" class="footref" href="#fn.1">1</a></sup>
+the external dependencies in such a way that we make it easier to test
+the composition root?
+</p>
+</div>
+
+<div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1">Collecting initial state, event, and required result</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+A good user story tells us briefly what the Product Owner wants to see
+our system do.  The description in <a href="http://en.wikipedia.org/wiki/User_story#Format">format</a> "As a ... I want ... So that
+..." shows what the requirements are at interface level.  When
+discussed, a user story should have the <a href="http://en.wikipedia.org/wiki/INVEST_(mnemonic)">INVEST</a> qualities in order to
+be accepted into the backlog.  The T in that mnemonic stands for
+"Testable".  In <a href="http://en.wikipedia.org/wiki/Extreme_programming#Values">XP</a>, the <a href="http://en.wikipedia.org/wiki/Extreme_programming#Values">customer</a> is expected to take care of the
+acceptance tests, written at the system boundaries.  How can we help
+the customer to make the requirement testable?
+</p>
+
+<p>
+A good test is reproducible.  Therefore, it has a setup phase, making
+sure that the system is in a state from which we can verify the
+results of the test.  This is quite an important part, and bears a
+very big similarity to functional programming in general.<sup><a id="fnr.2" name="fnr.2" class="footref" href="#fn.2">2</a></sup>
+Seeing that the system should respond predictably, we should model
+that state as part of the input to the system (which we usually do,
+but not as explicitly).
+</p>
+
+<p>
+Generally, I believe we should write our requirements into tests like
+so:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-csharp"><span style="color: #0000FF;">public</span> <span style="color: #6434A3;">void</span> <span style="color: #006699;">HandleEvent_WhenGivenStateAndEvent_YieldsExpectedResult</span>()
+{
+    <span style="color: #6434A3;">Environment</span> <span style="color: #BA36A5;">initialState</span> = SetupEnvironment(); <span style="color: #8D8D84;">/* </span><span style="color: #8D8D84; font-style: italic;">To be filled in */</span>
+    <span style="color: #6434A3;">Event</span> <span style="color: #BA36A5;">eventToHandle</span> = SetupEvent(); <span style="color: #8D8D84;">/* </span><span style="color: #8D8D84; font-style: italic;">To be filled in, also */</span>
+
+    <span style="color: #6434A3;">Environment</span> <span style="color: #BA36A5;">expectedState</span> = SetupExpectation(); <span style="color: #8D8D84;">/* </span><span style="color: #8D8D84; font-style: italic;">Again, to be filled in */</span>
+
+    <span style="color: #0000FF;">var</span> result = <span style="color: #6434A3;">SystemUnderTest</span>.<span style="color: #006699;">HandleEvent</span>(initialState, eventToHandle);
+
+    <span style="color: #6434A3;">Assert</span>.<span style="color: #006699;">Equal</span>(expectedState, result);
+}
+</pre>
+</div>
+
+<p>
+At least, something along these lines.  The <code>Environment</code> type is the
+type that will hold everything that is a given state, and will evolve
+as more details about the environment are becoming clear.  It will
+hold stubs, mostly, for data that we know should be in the system (in
+databases).  It should also hold the state of the user interface, if
+it is part of the system.  Anything that resembles state, should be in
+that type.  Also, it should be considered immutable during execution
+of <code>HandleEvent()</code>.  I will explain why (and how) in the next
+sections.
+</p>
+
+<p>
+The Event is also very generic.  It should model everything that
+models the initiation of the interaction as described in the
+requirement.  The reason for this will become clear in the next
+section, too.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2-2" class="outline-3">
+<h3 id="sec-2-2">Stateless, functional design</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+If you know about Haskell and the <a href="https://wiki.haskell.org/IO_inside">IO Monad</a>, that may help understand
+where this is going.  The dependencies that we inject, in the form of
+the initialState parameter, form an immutable, trustworthy
+representation of the environment.  The Composition Root, which wires
+up the environment and calls the HandleEvent function when needed,
+should take care of the volatile, possibly violent outside world, and
+actually translate each request into something that can be predictably
+handled.
+</p>
+
+<p>
+The reason I want to have only a single method HandleEvent, instead of
+different methods for different requests, is that I want everything
+outside the tested code to have as little logic as possible, but I
+also still want each HandleEvent call to be responsible for only a
+single event or request.  If the Environment would deliver various
+events, it could no longer be considered stateless.  If the adapter
+should route different events to different handlers, there would be
+more environment-independent logic in the handler.
+</p>
+
+<p>
+With all the unpredictable stuff moved to this adapter, writing the
+inside code needs no longer be overly defensive, focusing on
+implementing the requirements instead of handling exceptions, and
+unforeseen situations and incomplete data.  The adapter code can now
+focus on being testable under different circumstances, and coordinate
+state changes to bottleneck state providers.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2-3" class="outline-3">
+<h3 id="sec-2-3">Wiring up to go live: test driven installation</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+Installing software is actually nothing more than connecting the
+software's expectation to the environmental reality.  In fact, when
+testing whether the software is correctly installed, it is not the
+installed software that needs to be tested.  That has been covered by
+the earlier unit tests already, and extensively so.  Really, the only
+thing that has changed and can be in error, is the environment.  And
+when looking at it from that perspective, an installation test is
+actually an environment test.
+</p>
+
+<p>
+Because the Environment type is clear in what it expects, the
+installation should make sure that those expectations are met.  This
+means that an installation is a function from any environment (no
+capital) to either an expected Environment or a clear communication on
+what is missing.  Sometimes this requires a lot of configuration,
+sometimes it is just reading the last working set of configuration
+options and testing them.
+</p>
+
+<p>
+You may notice that I am pushing the Composition Root and the
+installation software very close together.  Actually, I am pushing out
+the complete run time environment into the Composition Root, which is
+now the part that functions as an adapter between the real environment
+and the expected Environment.
+</p>
+
+<p>
+It is not yet clear to me, how big this outside adapter part should
+be.  But it should be the only part of the software that actually
+modifies state, or depends on hidden changes in state.  This means
+that the internals of the system, those we write from the
+requirements, will be state-free, and should work under all
+(explicitly) expected conditions.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Yet to come</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+In coming posts, I will focus on writing code driven by a requirement
+test.  I also want to dig deeper into the EnvironmentAdapter,
+fulfilling the roles of Composition Root, State Handler and
+Installation Tester.  Til then!
+</p>
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" name="fn.1" class="footnum" href="#fnr.1">1</a></sup> <p class="footpara">
+Colloquially speaking. I don't really know how to verb "Test
+Double".
+</p></div>
+
+<div class="footdef"><sup><a id="fn.2" name="fn.2" class="footnum" href="#fnr.2">2</a></sup> <p class="footpara">
+The similar part of functional programming being the
+<a href="http://c2.com/cgi/wiki?ReferentialTransparency">referential transparency</a>, here.
+</p></div>
+
+
+</div>
+</div>
