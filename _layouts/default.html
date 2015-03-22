@@ -3,12 +3,42 @@
 <html>
   <head>
     <title>{{ page.title }}</title>
-    <link href="http://thomasf.github.io/solarized-css/solarized-light.min.css" rel="stylesheet"></link>
+    <link href="http://thomasf.github.io/solarized-css/solarized-light.min.css"
+          rel="stylesheet"></link>
+    <style>
+      body {
+      min-height: 200px;
+      }
+      .menu {
+      padding: 0;
+      margin: 0;
+      float: right;
+      text-align: right;
+      width: 200px;
+      overflow: hidden;
+      }
+      .menu li {
+      list-style-type: none;
+      }
+      .menu li a {
+      text-decoration: none;
+      border-radius: 4px 4px 0 0;
+      }
+      .menu li a:hover {
+      text-decoration: underline;
+      }
+    </style>
   </head>
   <body>
     <h1>{{ page.title }}</h1>
-    <span class="home"><a href="/">Home</a></span>
-    <span class="page-history"><a href="https://github.com/joranvar/joranvar.github.io/commits/master/{{ page.path }}">View page history</a></span>
-    {{ content }}
+    <div class="menu">
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="https://github.com/joranvar/joranvar.github.io/commits/master/{{ page.path }}">View page history</a></li>
+      </ul>
+    </div>
+    <div class="content">
+      {{ content }}
+    </div>
   </body>
 </html>
