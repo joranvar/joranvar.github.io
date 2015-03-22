@@ -6,7 +6,7 @@
 #+KEYWORDS:    tdd, functional
 #+TAGS:        tdd
 #+LANGUAGE:    en
-#+OPTIONS:     H:3 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t
+#+OPTIONS:     H:3 num:nil toc:nil \n:nil ::t |:t ^:{} -:nil f:t *:t <:t
 #+DESCRIPTION: A proposal for a more complete outside-in TDD method
 #+BEGIN_HTML
 ---
@@ -56,9 +56,9 @@ but will be a waste of time in the development of many systems.
 With outside-in TDD, YAGNI manifests itself in thinking up
 collaborators that may or may not have a lot of work to do.  Will you
 really need a new interface and a class for behavior that is never
-going to be modular?  Will you need an "IEmailValidator" in your
-"UserAccountController", and an "IEmailRegexProvider" inside that, and
-maybe an "IRegexBuilder" inside that again, or will it be better to
+going to be modular?  Will you need an ~IEmailValidator~ in your
+~UserAccountController~, and an ~IEmailRegexProvider~ inside that, and
+maybe an ~IRegexBuilder~ inside that again?  Or will it be better to
 make sure that a request is always in a strongly typed, correctly
 formed object?
 
@@ -82,7 +82,7 @@ quite hard, this is not the thing you want to start too late.
 Even worse: the composition root being the last one to be written, it
 probably has no clear interface.  There may be a config file, but even
 that does not really communicate the application's dependencies too
-clearly.  And unclear dependencies / requirements are harder to test.
+clearly.  And unclear dependencies or requirements are harder to test.
 
 * Starting with the requirement
 
@@ -103,7 +103,7 @@ our system do.  The description in [[http://en.wikipedia.org/wiki/User_story#For
 ..." shows what the requirements are at interface level.  When
 discussed, a user story should have the [[http://en.wikipedia.org/wiki/INVEST_(mnemonic)][INVEST]] qualities in order to
 be accepted into the backlog.  The T in that mnemonic stands for
-"Testable".  In [[http://en.wikipedia.org/wiki/Extreme_programming#Values][XP]], the [[http://en.wikipedia.org/wiki/Extreme_programming#Values][customer]] is expected to take care of the
+"Testable".  In [[http://en.wikipedia.org/wiki/Extreme_programming#Values][XP]], the [[http://www.extremeprogramming.org/rules/customer.html][customer]] is expected to take care of the
 acceptance tests, written at the system boundaries.  How can we help
 the customer to make the requirement testable?
 
@@ -121,13 +121,12 @@ so:
 #+BEGIN_SRC csharp
   public void HandleEvent_WhenGivenStateAndEvent_YieldsExpectedResult()
   {
-      Environment initialState = SetupEnvironment(); /* To be filled in */
-      Event eventToHandle = SetupEvent(); /* To be filled in, also */
+      Environment initialState = SetupEnvironment(); // To be filled in
+      Event eventToHandle = SetupEvent(); // To be filled in, also
 
-      Environment expectedState = SetupExpectation(); /* Again, to be filled in */
+      var result = TheApplication.HandleEvent(initialState, eventToHandle);
 
-      var result = SystemUnderTest.HandleEvent(initialState, eventToHandle);
-
+      Environment expectedState = SetupExpectation(); // Again, to be filled in
       Assert.Equal(expectedState, result);
   }
 #+END_SRC
@@ -159,20 +158,20 @@ actually translate each request into something that can be predictably
 handled.
 
 The reason I want to have only a single method HandleEvent, instead of
-different methods for different requests, is that I want everything
-outside the tested code to have as little logic as possible, but I
-also still want each HandleEvent call to be responsible for only a
-single event or request.  If the Environment would deliver various
-events, it could no longer be considered stateless.  If the adapter
-should route different events to different handlers, there would be
-more environment-independent logic in the handler.
+different methods for different requests or events, is that I want
+everything outside the tested code to have as little logic as
+possible, but I also still want each HandleEvent call to be
+responsible for only a single event or request.  If the Environment
+would deliver various events, it could no longer be considered
+stateless.  If the adapter should route different events to different
+handlers, there would be more environment-independent logic inside
+this Composition Root[fn:3].
 
 With all the unpredictable stuff moved to this adapter, writing the
 inside code needs no longer be overly defensive, focusing on
-implementing the requirements instead of handling exceptions, and
-unforeseen situations and incomplete data.  The adapter code can now
-focus on being testable under different circumstances, and coordinate
-state changes to bottleneck state providers.
+implementing the requirements instead of handling exceptions,
+unforeseen situations, and incomplete data.  The adapter code can now
+focus on being testable under different circumstances.[fn:4]
 
 ** Wiring up to go live: test driven installation
 
@@ -194,10 +193,9 @@ sometimes it is just reading the last working set of configuration
 options and testing them.
 
 You may notice that I am pushing the Composition Root and the
-installation software very close together.  Actually, I am pushing out
-the complete run time environment into the Composition Root, which is
-now the part that functions as an adapter between the real environment
-and the expected Environment.
+installation software very close together.  As the environment can
+change between runs, it should be tested on every startup.  And the
+installation should do more or less the same.
 
 It is not yet clear to me, how big this outside adapter part should
 be.  But it should be the only part of the software that actually
@@ -219,4 +217,15 @@ Installation Tester.  Til then!
 Double".
 
 [fn:2] The similar part of functional programming being the
-[[http://c2.com/cgi/wiki?ReferentialTransparency][referential transparency]], here.
+[[http://c2.com/cgi/wiki?ReferentialTransparency][referential transparency]], here.  Executing the same test 100 times
+will yield the same result 100 times.
+
+[fn:3] Actually, I should start calling it the EnvironmentAdapter,
+because this code should do more than just wire objects together.
+
+[fn:4] It should probably also have some code to coordinate state
+changes to bottleneck state providers.  That is, requests can be
+totally independent of their surroundings, and therefore handled
+concurrently.  But writes to a database, for instance, should still be
+coordinated.  That stuff is stateful, and should lie here, too.  More
+on that in later posts.

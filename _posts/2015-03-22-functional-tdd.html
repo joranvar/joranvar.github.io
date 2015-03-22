@@ -61,9 +61,9 @@ but will be a waste of time in the development of many systems.
 With outside-in TDD, YAGNI manifests itself in thinking up
 collaborators that may or may not have a lot of work to do.  Will you
 really need a new interface and a class for behavior that is never
-going to be modular?  Will you need an "IEmailValidator" in your
-"UserAccountController", and an "IEmailRegexProvider" inside that, and
-maybe an "IRegexBuilder" inside that again, or will it be better to
+going to be modular?  Will you need an <code>IEmailValidator</code> in your
+<code>UserAccountController</code>, and an <code>IEmailRegexProvider</code> inside that, and
+maybe an <code>IRegexBuilder</code> inside that again?  Or will it be better to
 make sure that a request is always in a strongly typed, correctly
 formed object?
 </p>
@@ -96,7 +96,7 @@ quite hard, this is not the thing you want to start too late.
 Even worse: the composition root being the last one to be written, it
 probably has no clear interface.  There may be a config file, but even
 that does not really communicate the application's dependencies too
-clearly.  And unclear dependencies / requirements are harder to test.
+clearly.  And unclear dependencies or requirements are harder to test.
 </p>
 </div>
 </div>
@@ -127,7 +127,7 @@ our system do.  The description in <a href="http://en.wikipedia.org/wiki/User_st
 ..." shows what the requirements are at interface level.  When
 discussed, a user story should have the <a href="http://en.wikipedia.org/wiki/INVEST_(mnemonic)">INVEST</a> qualities in order to
 be accepted into the backlog.  The T in that mnemonic stands for
-"Testable".  In <a href="http://en.wikipedia.org/wiki/Extreme_programming#Values">XP</a>, the <a href="http://en.wikipedia.org/wiki/Extreme_programming#Values">customer</a> is expected to take care of the
+"Testable".  In <a href="http://en.wikipedia.org/wiki/Extreme_programming#Values">XP</a>, the <a href="http://www.extremeprogramming.org/rules/customer.html">customer</a> is expected to take care of the
 acceptance tests, written at the system boundaries.  How can we help
 the customer to make the requirement testable?
 </p>
@@ -151,13 +151,12 @@ so:
 
 <pre class="src src-csharp"><span style="color: #0000FF;">public</span> <span style="color: #6434A3;">void</span> <span style="color: #006699;">HandleEvent_WhenGivenStateAndEvent_YieldsExpectedResult</span>()
 {
-    <span style="color: #6434A3;">Environment</span> <span style="color: #BA36A5;">initialState</span> = SetupEnvironment(); <span style="color: #8D8D84;">/* </span><span style="color: #8D8D84; font-style: italic;">To be filled in */</span>
-    <span style="color: #6434A3;">Event</span> <span style="color: #BA36A5;">eventToHandle</span> = SetupEvent(); <span style="color: #8D8D84;">/* </span><span style="color: #8D8D84; font-style: italic;">To be filled in, also */</span>
+    <span style="color: #6434A3;">Environment</span> <span style="color: #BA36A5;">initialState</span> = SetupEnvironment(); <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">To be filled in</span>
+    <span style="color: #6434A3;">Event</span> <span style="color: #BA36A5;">eventToHandle</span> = SetupEvent(); <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">To be filled in, also</span>
 
-    <span style="color: #6434A3;">Environment</span> <span style="color: #BA36A5;">expectedState</span> = SetupExpectation(); <span style="color: #8D8D84;">/* </span><span style="color: #8D8D84; font-style: italic;">Again, to be filled in */</span>
+    <span style="color: #0000FF;">var</span> result = <span style="color: #6434A3;">TheApplication</span>.<span style="color: #006699;">HandleEvent</span>(initialState, eventToHandle);
 
-    <span style="color: #0000FF;">var</span> result = <span style="color: #6434A3;">SystemUnderTest</span>.<span style="color: #006699;">HandleEvent</span>(initialState, eventToHandle);
-
+    <span style="color: #6434A3;">Environment</span> <span style="color: #BA36A5;">expectedState</span> = SetupExpectation(); <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Again, to be filled in</span>
     <span style="color: #6434A3;">Assert</span>.<span style="color: #006699;">Equal</span>(expectedState, result);
 }
 </pre>
@@ -200,22 +199,22 @@ handled.
 
 <p>
 The reason I want to have only a single method HandleEvent, instead of
-different methods for different requests, is that I want everything
-outside the tested code to have as little logic as possible, but I
-also still want each HandleEvent call to be responsible for only a
-single event or request.  If the Environment would deliver various
-events, it could no longer be considered stateless.  If the adapter
-should route different events to different handlers, there would be
-more environment-independent logic in the handler.
+different methods for different requests or events, is that I want
+everything outside the tested code to have as little logic as
+possible, but I also still want each HandleEvent call to be
+responsible for only a single event or request.  If the Environment
+would deliver various events, it could no longer be considered
+stateless.  If the adapter should route different events to different
+handlers, there would be more environment-independent logic inside
+this Composition Root<sup><a id="fnr.3" name="fnr.3" class="footref" href="#fn.3">3</a></sup>.
 </p>
 
 <p>
 With all the unpredictable stuff moved to this adapter, writing the
 inside code needs no longer be overly defensive, focusing on
-implementing the requirements instead of handling exceptions, and
-unforeseen situations and incomplete data.  The adapter code can now
-focus on being testable under different circumstances, and coordinate
-state changes to bottleneck state providers.
+implementing the requirements instead of handling exceptions,
+unforeseen situations, and incomplete data.  The adapter code can now
+focus on being testable under different circumstances.<sup><a id="fnr.4" name="fnr.4" class="footref" href="#fn.4">4</a></sup>
 </p>
 </div>
 </div>
@@ -246,10 +245,9 @@ options and testing them.
 
 <p>
 You may notice that I am pushing the Composition Root and the
-installation software very close together.  Actually, I am pushing out
-the complete run time environment into the Composition Root, which is
-now the part that functions as an adapter between the real environment
-and the expected Environment.
+installation software very close together.  As the environment can
+change between runs, it should be tested on every startup.  And the
+installation should do more or less the same.
 </p>
 
 <p>
@@ -286,7 +284,22 @@ Double".
 
 <div class="footdef"><sup><a id="fn.2" name="fn.2" class="footnum" href="#fnr.2">2</a></sup> <p class="footpara">
 The similar part of functional programming being the
-<a href="http://c2.com/cgi/wiki?ReferentialTransparency">referential transparency</a>, here.
+<a href="http://c2.com/cgi/wiki?ReferentialTransparency">referential transparency</a>, here.  Executing the same test 100 times
+will yield the same result 100 times.
+</p></div>
+
+<div class="footdef"><sup><a id="fn.3" name="fn.3" class="footnum" href="#fnr.3">3</a></sup> <p class="footpara">
+Actually, I should start calling it the EnvironmentAdapter,
+because this code should do more than just wire objects together.
+</p></div>
+
+<div class="footdef"><sup><a id="fn.4" name="fn.4" class="footnum" href="#fnr.4">4</a></sup> <p class="footpara">
+It should probably also have some code to coordinate state
+changes to bottleneck state providers.  That is, requests can be
+totally independent of their surroundings, and therefore handled
+concurrently.  But writes to a database, for instance, should still be
+coordinated.  That stuff is stateful, and should lie here, too.  More
+on that in later posts.
 </p></div>
 
 
