@@ -1,0 +1,41 @@
+#+TITLE:       The Environment from the Requirement
+#+AUTHOR:      Bart Post
+#+EMAIL:       bart.post@gmail.com
+#+LANGUAGE:    en
+#+OPTIONS:     H:3 num:nil toc:nil \n:nil ::t |:t ^:{} -:nil f:t *:t <:t
+#+BEGIN_HTML
+---
+layout: default
+title: The Environment from the Requirement
+---
+#+END_HTML
+
+* Defining the first types
+
+All's good and well, but my last (first!) post did say a lot without
+giving very much information on many things.  Consider it an
+introduction or overview.  This post will try to make things more
+clear by example, starting with the types that will be the same in all
+requirement driven tests.  The ~Environment~, the ~Event~ and possibly
+~TheApplication.HandleEvent~.
+
+I will first go over these types once more, explaining their use, and
+then implement them given an example requirement.
+
+** The ~Environment~
+
+As said, the Environment class will handle everything that is a given
+state.  Not only will this make the setup phase of the unit tests
+easier, it will also help us split the application state from the
+functional parts (which can be stateless, thus easier to test).
+
+** The ~Event~
+
+This will contain all information needed by our application to handle
+one single request from the outside world.  It may be a button click,
+a timer event or a web request.  It is separate from the ~Environment~
+because it will hold different kinds of information for each request.
+It is like the ~Environment~ because it is communicated from the
+outside world and therefore managed by the Composition Root.
+
+** The ~HandleEvent~ method
