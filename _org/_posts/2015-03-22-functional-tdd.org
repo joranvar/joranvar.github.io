@@ -44,7 +44,7 @@ design).  And to prevent that design from becoming too restricting,
 more effort is put into setting up a better design up front, leading
 to...
 
-** YAGNI
+** YAGNI[fn:6]
 
 Bigger designs up front mean designing for things that you're probably
 not gonna need anyway.  With inside-out TDD, the most easily
@@ -233,3 +233,5 @@ on that in later posts.
 [fn:5] [[http://martinfowler.com/articles/mocksArentStubs.html][This blog]] by Martin Fowler has a lot of interesting things to
 say about "Classical TDD" versus "Mockist TDD", I can recommend the
 read!
+
+[fn:6] [[http://c2.com/cgi/wiki?YouArentGonnaNeedIt][You aren't gonna need it!]]
